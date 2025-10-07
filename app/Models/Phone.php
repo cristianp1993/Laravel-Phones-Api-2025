@@ -17,9 +17,16 @@ class Phone extends Model
         'is_primary',
         'extension',
         'notes',
+        'category_id',
+        'barcode',
     ];
 
     protected $casts = [
         'is_primary' => 'boolean',
     ];
+
+     public function category()
+    {
+        return $this->belongsTo(Category::class); 
+    }
 }

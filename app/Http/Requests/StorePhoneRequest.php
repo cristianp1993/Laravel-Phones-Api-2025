@@ -29,6 +29,8 @@ class StorePhoneRequest extends FormRequest
             'is_primary'   => ['boolean'],
             'extension'    => ['nullable','string','max:10'],
             'notes'        => ['nullable','string'],
+            'category_id'  => ['nullable','integer','exists:categories,id'],
+            'barcode'      => ['nullable','string','max:255'],
         ];
     }
 }

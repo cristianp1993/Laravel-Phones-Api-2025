@@ -31,6 +31,7 @@ class PhoneController extends Controller
      */
     public function show(Phone $phone)
     {
+        $phone->load('category');
         return $phone;
     }
 

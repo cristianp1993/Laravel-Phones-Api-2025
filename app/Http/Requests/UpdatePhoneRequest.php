@@ -30,6 +30,8 @@ class UpdatePhoneRequest extends FormRequest
             'is_primary'   => ['sometimes','boolean'],
             'extension'    => ['sometimes','nullable','string','max:10'],
             'notes'        => ['sometimes','nullable','string'],
+            'category_id'  => ['nullable','integer','exists:categories,id'],
+            'barcode'      => ['nullable','string','max:255'],
         ];
     }
 }
