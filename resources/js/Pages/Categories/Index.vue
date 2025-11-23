@@ -1,0 +1,283 @@
+<script setup>
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import AppLayout from '../../Layouts/AppLayout.vue';
+
+const props = defineProps({
+    categories: {
+        type: Object,
+        required: true,
+    },
+    filters: {
+        type: Object,
+        default: () => ({}),
+    },
+});
+
+const page = usePage();
+
+const search = ref(props.filters.search || '');
+let timeout = null;
+
+watch(search, (value) => {
+    if (timeout) {
+        clearTimeout(timeout);
+    }
+
+    timeout = setTimeout(() => {
+        router.get('/categories', { search: value }, {
+            preserveState: true,
+            replace: true,
+        });
+    }, 400);
+});
+
+const toastVisible = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success');
+let toastTimeout = null;
+
+const showToast = (message, type = 'success') => {
+    toastMessage.value = message;
+    toastType.value = type;
+    toastVisible.value = true;
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+    toastTimeout = setTimeout(() => {
+        toastVisible.value = false;
+    }, 3000);
+};
+
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash && flash.success) {
+            showToast(flash.success, 'success');
+        }
+        if (flash && flash.error) {
+            showToast(flash.error, 'error');
+        }
+    },
+    { deep: true }
+);
+
+const goToCreate = () => {
+    router.get('/categories/create');
+};
+
+const goToEdit = (category) => {
+    router.get(`/categories/${category.id}/edit`);
+};
+
+const goToShow = (category) => {
+    router.get(`/categories/${category.id}`);
+};
+
+const showDeleteModal = ref(false);
+const categoryToDelete = ref(null);
+
+const askDelete = (category) => {
+    categoryToDelete.value = category;
+    showDeleteModal.value = true;
+};
+
+const confirmDelete = () => {
+    if (!categoryToDelete.value) return;
+
+    router.delete(`/categories/${categoryToDelete.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showDeleteModal.value = false;
+            categoryToDelete.value = null;
+        },
+        onError: () => {
+            showDeleteModal.value = false;
+        },
+    });
+};
+
+const cancelDelete = () => {
+    showDeleteModal.value = false;
+    categoryToDelete.value = null;
+};
+</script>
+
+<template>
+    <AuthenticatedLayout>
+        <Head title="Categorías" />
+
+        <template #header>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                Listado de categorías
+            </h2>
+        </template>
+
+        <div class="py-12">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <input
+                                    v-model="search"
+                                    type="text"
+                                    placeholder="Buscar por nombre..."
+                                    class="border rounded px-3 py-2 text-sm"
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded shadow hover:bg-indigo-700"
+                                @click="goToCreate"
+                            >
+                                Nueva categoría
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <thead>
+                                    <tr class="border-b">
+                                        <th class="text-left p-2">ID</th>
+                                        <th class="text-left p-2">Nombre</th>
+                                        <th class="text-left p-2">Estado</th>
+                                        <th class="text-left p-2">Slug</th>
+                                        <th class="text-left p-2">Descripción</th>
+                                        <th class="text-left p-2">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="category in categories.data"
+                                        :key="category.id"
+                                        class="border-b hover:bg-gray-50"
+                                    >
+                                        <td class="p-2">{{ category.id }}</td>
+                                        <td class="p-2">
+                                            <button
+                                                type="button"
+                                                class="text-indigo-600 hover:underline"
+                                                @click="goToShow(category)"
+                                            >
+                                                {{ category.name }}
+                                            </button>
+                                        </td>
+                                        <td class="p-2">
+                                            <span
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs"
+                                                :class="category.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                                            >
+                                                {{ category.estado ? 'Activa' : 'Inactiva' }}
+                                            </span>
+                                        </td>
+                                        <td class="p-2">{{ category.slug }}</td>
+                                        <td class="p-2">
+                                            {{ category.description || '—' }}
+                                        </td>
+                                        <td class="p-2 space-x-2">
+                                            <button
+                                                type="button"
+                                                class="text-xs text-blue-600 hover:underline"
+                                                @click="goToEdit(category)"
+                                            >
+                                                Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="text-xs text-red-600 hover:underline"
+                                                @click="askDelete(category)"
+                                            >
+                                                Eliminar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="text-xs text-gray-600 hover:underline"
+                                                @click="goToShow(category)"
+                                            >
+                                                Ver detalle
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <tr v-if="categories.data.length === 0">
+                                        <td colspan="6" class="p-4 text-center text-gray-500">
+                                            No hay categorías para mostrar.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 flex justify-between items-center">
+                            <p class="text-xs text-gray-500">
+                                Mostrando {{ categories.from || 0 }}-{{ categories.to || 0 }}
+                                de {{ categories.total }} resultados
+                            </p>
+
+                            <div class="flex space-x-2">
+                                <button
+                                    v-for="link in categories.links"
+                                    :key="link.label"
+                                    type="button"
+                                    class="px-3 py-1 border rounded text-xs"
+                                    :class="{
+                                        'bg-indigo-600 text-white': link.active,
+                                        'text-gray-600 bg-white': !link.active,
+                                        'opacity-50 cursor-not-allowed': !link.url,
+                                    }"
+                                    :disabled="!link.url"
+                                    @click="link.url && router.get(link.url, {}, { preserveState: true })"
+                                    v-html="link.label"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-if="toastVisible"
+            class="fixed bottom-4 right-4 px-4 py-2 rounded shadow text-sm"
+            :class="toastType === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
+        >
+            {{ toastMessage }}
+        </div>
+
+        <div
+            v-if="showDeleteModal"
+            class="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+        >
+            <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                    Eliminar categoría
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    ¿Seguro que deseas eliminar la categoría
+                    <span class="font-semibold">
+                        "{{ categoryToDelete?.name }}"
+                    </span>
+                    ?
+                </p>
+                <div class="flex justify-end space-x-2">
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                        @click="cancelDelete"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+                        @click="confirmDelete"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>

@@ -9,7 +9,7 @@ class PhoneFactory extends Factory
 {
     public function definition(): array
     {
-        // número único de 10 dígitos (ej. Colombia)
+        // número único de 10 dígitos 
         $number = $this->faker->unique()->numerify('3#########');
 
         // toma un id de categoría existente; si no hay, crea una
