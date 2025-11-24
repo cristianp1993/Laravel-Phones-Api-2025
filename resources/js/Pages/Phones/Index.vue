@@ -4,7 +4,7 @@ import { ref, watch } from 'vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
 const props = defineProps({
-    categories: {
+    phones: {
         type: Object,
         required: true,
     },
@@ -25,7 +25,7 @@ watch(search, (value) => {
     }
 
     timeout = setTimeout(() => {
-        router.get('/categories', { search: value }, {
+        router.get(route('phones.index'), { search: value }, {
             preserveState: true,
             replace: true,
         });
@@ -63,33 +63,33 @@ watch(
 );
 
 const goToCreate = () => {
-    router.get('/categories/create');
+    router.get('/phones/create');
 };
 
-const goToEdit = (category) => {
-    router.get(`/categories/${category.id}/edit`);
+const goToEdit = (phone) => {
+    router.get(`/phones/${phone.id}/edit`);
 };
 
-const goToShow = (category) => {
-    router.get(`/categories/${category.id}`);
+const goToShow = (phone) => {
+    router.get(`/phones/${phone.id}`);
 };
 
 const showDeleteModal = ref(false);
-const categoryToDelete = ref(null);
+const phoneToDelete = ref(null);
 
-const askDelete = (category) => {
-    categoryToDelete.value = category;
+const askDelete = (phone) => {
+    phoneToDelete.value = phone;
     showDeleteModal.value = true;
 };
 
 const confirmDelete = () => {
-    if (!categoryToDelete.value) return;
+    if (!phoneToDelete.value) return;
 
-    router.delete(`/categories/${categoryToDelete.value.id}`, {
+    router.delete(`/phones/${phoneToDelete.value.id}`, {
         preserveScroll: true,
         onSuccess: () => {
             showDeleteModal.value = false;
-            categoryToDelete.value = null;
+            phoneToDelete.value = null;
         },
         onError: () => {
             showDeleteModal.value = false;
@@ -99,17 +99,17 @@ const confirmDelete = () => {
 
 const cancelDelete = () => {
     showDeleteModal.value = false;
-    categoryToDelete.value = null;
+    phoneToDelete.value = null;
 };
 </script>
 
 <template>
     <AuthenticatedLayout>
-        <Head title="Categorías" />
+        <Head title="Teléfonos" />
 
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Listado de categorías
+                Listado de teléfonos
             </h2>
         </template>
 
@@ -122,7 +122,7 @@ const cancelDelete = () => {
                                 <input
                                     v-model="search"
                                     type="text"
-                                    placeholder="Buscar por nombre..."
+                                    placeholder="Buscar por número..."
                                     class="border rounded px-3 py-2 text-sm"
                                 />
                             </div>
@@ -132,7 +132,7 @@ const cancelDelete = () => {
                                 class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded shadow hover:bg-indigo-700"
                                 @click="goToCreate"
                             >
-                                Nueva categoría
+                                Nuevo teléfono
                             </button>
                         </div>
 
@@ -141,73 +141,75 @@ const cancelDelete = () => {
                                 <thead>
                                     <tr class="border-b">
                                         <th class="text-left p-2">ID</th>
-                                        <th class="text-left p-2">Nombre</th>
-                                        <th class="text-left p-2">Estado</th>
-                                        <th class="text-left p-2">Slug</th>
-                                        <th class="text-left p-2">Descripción</th>
-                                        <th class="text-left p-2">Total teléfonos</th>
+                                        <th class="text-left p-2">Número</th>
+                                        <th class="text-left p-2">Categoría</th>
+                                        <th class="text-left p-2">Tipo</th>
+                                        <th class="text-left p-2">Principal</th>
+                                        <th class="text-left p-2">Código país</th>
                                         <th class="text-left p-2">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr
-                                        v-for="category in categories.data"
-                                        :key="category.id"
+                                        v-for="phone in phones.data"
+                                        :key="phone.id"
                                         class="border-b hover:bg-gray-50"
                                     >
-                                        <td class="p-2">{{ category.id }}</td>
+                                        <td class="p-2">{{ phone.id }}</td>
                                         <td class="p-2">
                                             <button
                                                 type="button"
                                                 class="text-indigo-600 hover:underline"
-                                                @click="goToShow(category)"
+                                                @click="goToShow(phone)"
                                             >
-                                                {{ category.name }}
+                                                {{ phone.number }}
                                             </button>
+                                        </td>
+                                        <td class="p-2">
+                                            {{ phone.category ? phone.category.name : 'Sin categoría' }}
+                                        </td>
+                                        <td class="p-2">
+                                            {{ phone.type || '—' }}
                                         </td>
                                         <td class="p-2">
                                             <span
                                                 class="inline-flex items-center px-2 py-1 rounded-full text-xs"
-                                                :class="category.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                                                :class="phone.is_primary ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'"
                                             >
-                                                {{ category.estado ? 'Activa' : 'Inactiva' }}
+                                                {{ phone.is_primary ? 'Sí' : 'No' }}
                                             </span>
                                         </td>
-                                        <td class="p-2">{{ category.slug }}</td>
                                         <td class="p-2">
-                                            {{ category.description || '—' }}
-                                        </td>
-                                        <td class="p-2">
-                                            {{ category.phones_count }}
+                                            {{ phone.country_code || '—' }}
                                         </td>
                                         <td class="p-2 space-x-2">
                                             <button
                                                 type="button"
                                                 class="text-xs text-blue-600 hover:underline"
-                                                @click="goToEdit(category)"
+                                                @click="goToEdit(phone)"
                                             >
                                                 Editar
                                             </button>
                                             <button
                                                 type="button"
                                                 class="text-xs text-red-600 hover:underline"
-                                                @click="askDelete(category)"
+                                                @click="askDelete(phone)"
                                             >
                                                 Eliminar
                                             </button>
                                             <button
                                                 type="button"
                                                 class="text-xs text-gray-600 hover:underline"
-                                                @click="goToShow(category)"
+                                                @click="goToShow(phone)"
                                             >
                                                 Ver detalle
                                             </button>
                                         </td>
                                     </tr>
 
-                                    <tr v-if="categories.data.length === 0">
+                                    <tr v-if="phones.data.length === 0">
                                         <td colspan="7" class="p-4 text-center text-gray-500">
-                                            No hay categorías para mostrar.
+                                            No hay teléfonos para mostrar.
                                         </td>
                                     </tr>
                                 </tbody>
@@ -216,13 +218,13 @@ const cancelDelete = () => {
 
                         <div class="mt-4 flex justify-between items-center">
                             <p class="text-xs text-gray-500">
-                                Mostrando {{ categories.from || 0 }}-{{ categories.to || 0 }}
-                                de {{ categories.total }} resultados
+                                Mostrando {{ phones.from || 0 }}-{{ phones.to || 0 }}
+                                de {{ phones.total }} resultados
                             </p>
 
                             <div class="flex space-x-2">
                                 <button
-                                    v-for="link in categories.links"
+                                    v-for="link in phones.links"
                                     :key="link.label"
                                     type="button"
                                     class="px-3 py-1 border rounded text-xs"
@@ -256,12 +258,12 @@ const cancelDelete = () => {
         >
             <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">
-                    Eliminar categoría
+                    Eliminar teléfono
                 </h3>
                 <p class="text-sm text-gray-600 mb-4">
-                    ¿Seguro que deseas eliminar la categoría
+                    ¿Seguro que deseas eliminar el teléfono
                     <span class="font-semibold">
-                        "{{ categoryToDelete?.name }}"
+                        "{{ phoneToDelete?.number }}"
                     </span>
                     ?
                 </p>

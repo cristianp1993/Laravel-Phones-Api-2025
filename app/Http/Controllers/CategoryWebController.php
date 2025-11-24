@@ -14,6 +14,7 @@ class CategoryWebController extends Controller
         $search = $request->input('search');
 
         $categories = Category::query()
+            ->withCount('phones')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'ILIKE', "%{$search}%");
             })
